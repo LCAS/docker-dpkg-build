@@ -25,5 +25,5 @@ RUN mkdir /package
 COPY run.sh /run.sh
 RUN chmod u+x /run.sh
 
-CMD ["--no-sign -b"]
+CMD [""]
 ENTRYPOINT ["./run.sh"]
