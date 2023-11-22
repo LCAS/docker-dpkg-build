@@ -7,25 +7,31 @@ else
 fi
 
 set -x 
-cd /package/$PACKAGE_NAME
+cd /package
+mkdir -p gbp
+git clone  ${GBP_REPO} gbp/
+cd gbp
+git checkout ${GBP_TAG}
 
-apt-get update 
+#apt-get update 
+#rosdep update
 
-mkdir -p /tmp/additional_debs
-for url in "$DEB_URLS"; do
-    package_name=`basename $url`
-    while true; do
-        if curl -o /tmp/additional_debs/$package_name $url; then
-            echo "downloaded $url as $package_name"
-            apt-get install -y /tmp/additional_debs/$package_name
-            break
-        else
-            echo "keep waiting for $url to become available"
-            sleep 10
-        fi
-    done
-done
-rm -rf /tmp/additional_debs
+# mkdir -p /tmp/additional_debs
+# for url in "$DEB_URLS"; do
+#     package_name=`basename $url`
+#     while true; do
+#         if curl -o /tmp/additional_debs/$package_name $url; then
+#             echo "downloaded $url as $package_name"
+#             apt-get install -y /tmp/additional_debs/$package_name
+#             break
+#         else
+#             echo "keep waiting for $url to become available"
+#             sleep 10
+#         fi
+#     done
+# done
+# rm -rf /tmp/additional_debs
+export DEB_BUILD_OPTIONS=nocheck
 
 mk-build-deps -i -r -t "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y"
 gbp buildpackage --git-ignore-branch --git-ignore-new -S "$sign_arg"
