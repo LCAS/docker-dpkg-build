@@ -19,8 +19,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: "setup workspace"
-      run: "mkdir -p ${{ github.workspace }}:/package"
     - uses: addnab/docker-run-action@v3
       with:
         username: lcas
