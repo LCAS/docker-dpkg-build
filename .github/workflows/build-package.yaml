@@ -12,6 +12,8 @@ on:
         required: true
         description: "something like debian/ros-humble-geometry-msgs_4.2.3-1_jammy"
 
+run-name: Build ${{ inputs.release_repo }} for tag ${{ inputs.release_tag }}, invoked by @${{ github.actor }}
+
 jobs:
 
   build:
