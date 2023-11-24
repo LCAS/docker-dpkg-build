@@ -34,7 +34,7 @@ jobs:
       with:
         name: debs
         path: |
-          /package/*.deb
-          /package/*.ddeb
-          /package/*.tar.?z
-          /package/*.changes
+          ${{ github.workspace }}/*.deb
+          ${{ github.workspace }}/*.ddeb
+          ${{ github.workspace }}/*.tar.?z
+          ${{ github.workspace }}/*.changes
