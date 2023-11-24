@@ -27,6 +27,14 @@ jobs:
         password: lincoln
         registry: lcas.lincoln.ac.uk
         image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
-        options: -v ${{ github.workspace }}:/package -e GBP_REPO="${{ github.event.inputs.release_repo}}" -e GBP_TAG="${{ github.event.inputs.release_tag}}"
+        options: -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}}
         run: |
           ./run.sh
+    - uses: actions/upload-artifact@v3
+      with:
+        name: debs
+        path: |
+          /package/*.deb
+          /package/*.ddeb
+          /package/*.tar.?z
+          /package/*.changes
