@@ -1,0 +1,32 @@
+name: Docker Image Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_repo:
+        type: string
+        required: true
+        description: "The URL to the GBP repository"
+      release_tag:
+        type: string
+        required: true
+        description: "something like debian/ros-humble-geometry-msgs_4.2.3-1_jammy"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: "setup workspace"
+      run: "mkdir -p ${{ github.workspace }}:/package"
+    - uses: addnab/docker-run-action@v3
+      with:
+        username: lcas
+        password: lincoln
+        registry: lcas.lincoln.ac.uk
+        image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
+        options: -v ${{ github.workspace }}:/package -e GBP_REPO="${{ github.event.inputs.release_repo}}" -e GBP_TAG="${{ github.event.inputs.release_tag}}"
+        run: |
+          ./run.sh
