@@ -1,4 +1,4 @@
-name: Docker Image Build
+name: Compile GPB Package
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       release_repo:
         type: string
         required: true
-        description: "The URL to the GBP repository"
+        description: "The URL to the GPB repository"
       release_tag:
         type: string
         required: true
