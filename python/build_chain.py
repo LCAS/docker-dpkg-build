@@ -17,7 +17,7 @@ class GitHubInterface:
         from github import Auth
 
         if token is None:
-            token = environ.get('GITHUB_TOKEN', '')
+            token = environ.get('GH_API_TOKEN', '')
         
         auth = Auth.Token(token)
 
