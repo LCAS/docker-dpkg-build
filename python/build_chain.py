@@ -39,7 +39,7 @@ class GitHubInterface:
 
 class AptlyClient:
 
-    def __init__(self, user='lcas', token=None):
+    def __init__(self, user='lcas', token=None, aptly_url='https://lcas.lincoln.ac.uk/apt/'):
         from aptly_api import Client as AptlyClient
         from requests.auth import HTTPBasicAuth
 
@@ -47,7 +47,7 @@ class AptlyClient:
             token = environ.get('APTLY_TOKEN', '')
 
         self.auth = HTTPBasicAuth(user, token)
-        self.aptly_url = 'https://lcas.lincoln.ac.uk/apt/'
+        self.aptly_url = aptly_url
         self.client = AptlyClient(self.aptly_url, ssl_verify=None, http_auth=self.auth)
     
     def report(self):
