@@ -4,11 +4,64 @@ from ros_buildfarm.config import get_distribution_file
 from rosdistro import get_distribution_cache
 from rosdistro import get_index
 from ros_buildfarm.release_job import _get_direct_dependencies, _get_downstream_package_names
+from ros_buildfarm.common import get_debian_package_name
 from apt.cache import Cache
 from pprint import pprint
 
 import sys
+from os import environ
 
+class GitHubInterface:
+    def __init__(self, token=None, runner_repo="LCAS/docker-dpkg-build", build_workflow_filename='build-package.yaml'):
+        from github import Github
+        from github import Auth
+
+        if token is None:
+            token = environ.get('GITHUB_TOKEN', '')
+        
+        auth = Auth.Token(token)
+
+        self.github = Github(auth=auth)
+        self.repo = self.github.get_repo(runner_repo)
+        self.build_workflow = self.repo.get_workflow(build_workflow_filename)
+    
+    def dispatch_build(self, release_repo=None, release_tag=None):
+        print('dispatch build job for %s on tag %s', (release_repo, release_tag))
+        if not self.build_workflow.create_dispatch(
+            'master',
+            inputs={
+                'release_repo': release_repo,
+                'release_tag': release_tag
+            }
+        ):
+            raise RuntimeError('couldn\'t dispatch')
+
+
+class AptlyClient:
+
+    def __init__(self, user='lcas', token=None):
+        from aptly_api import Client as AptlyClient
+        from requests.auth import HTTPBasicAuth
+
+        if token is None:
+            token = environ.get('APTLY_TOKEN', '')
+
+        self.auth = HTTPBasicAuth(user, token)
+        self.aptly_url = 'https://lcas.lincoln.ac.uk/apt/'
+        self.client = AptlyClient(self.aptly_url, ssl_verify=None, http_auth=self.auth)
+    
+    def report(self):
+        print('\nREPOS:')
+        pprint(self.client.repos.list())
+
+        print('\nFILES:')
+        pprint(self.client.files.list())
+
+        print('\nPUBLISH:')
+        pprint(self.client.publish.list())
+
+        print('\nSNPASHOTS:')
+        pprint(self.client.snapshots.list())
 
 class Apt:
     def __init__(self):
@@ -126,34 +179,42 @@ class DistroBuilder:
         try:
             required_version = self.get_package_version(pkg_name)
         except KeyError:
-            print('no version for %s found in distro file. Consider up-to-date' % pkg_name)
-            required_version=''
-            ##return True
-
-        print(
-            'check if package %s is already available '
-            'in apt repository with version %s'
-            % (pkg_name, required_version))
+            print('no version identified for "%s" found in our distro file. Consider it being up-to-date.' % pkg_name)
+            required_version='NOT_NEEDED'
+            return True
 
         # get package from Apt repo
+        deb_pkg_name = get_debian_package_name(self.distro, pkg_name)
         pkg = self.apt.get(pkg_name)
+        print(
+            'check if package "%s" (deb name: "%s") is already available '
+            'in apt repository with version %s'
+            % (pkg_name, deb_pkg_name, required_version))
 
         if pkg is None:
-            print('  no package with name %s in cache' % (pkg_name))
+            print('  no package with name %s in apt cache' % (deb_pkg_name))
             return False
 
-        print('  found version(s) %s of %s in apt cache' % (pkg.versions, pkg_name))
+        print('  found version(s) %s of %s in apt cache' % (pkg.versions, deb_pkg_name))
         for pv in pkg.versions:
             if str(pv).startswith(required_version):
                 return True
         return False
 
+#aptly = AptlyClient()
+#aptly.report()
 
-b = DistroBuilder()
-pkgs = b.get_ordered_packages()
-print(b.is_uptodate("ros-humble-desktop"))
-for (k,v) in pkgs:
-    #print(v)
-    pkg = v['name']
+github = GitHubInterface()
+github.dispatch_build(
+    'https://github.com/lcas-releases/topological_navigation.git', 
+    'debian/humble/topological_navigation_msgs/3.0.1-1')
 
-    print(b.is_uptodate(pkg))
+
+# b = DistroBuilder()
+# pkgs = b.get_ordered_packages()
+# print(b.is_uptodate("desktop"))
+# for (k,v) in pkgs:
+#     #print(v)
+#     pkg = v['name']
+
+#     print(b.is_uptodate(pkg))

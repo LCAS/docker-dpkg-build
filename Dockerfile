@@ -12,7 +12,7 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -sc) main
     curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
     #&& curl -s http://lcas.lincoln.ac.uk/repos/public.key | apt-key add - && sh -c 'echo "deb http://lcas.lincoln.ac.uk/ubuntu/main $(lsb_release -sc) main" > /etc/apt/sources.list.d/lcas-latest.list'
 
-RUN pip install -U bloom pip install pyyaml==5.1 git+https://github.com/ros-infrastructure/ros_buildfarm.git@3.0.1
+RUN pip install -U bloom pip install pyyaml==5.1 git+https://github.com/ros-infrastructure/ros_buildfarm.git@3.0.1 aptly-api-client pygithub
 
 ENV ROS_DISTRO=humble
 ENV ROS_PYTHON_VERSION=3
