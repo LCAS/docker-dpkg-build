@@ -28,7 +28,7 @@ jobs:
         run: |
           rosdep update
           apt-get update
-          ./build-chain.py
+          /build-chain.py
     - name: "copy from staging to lcas"
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
