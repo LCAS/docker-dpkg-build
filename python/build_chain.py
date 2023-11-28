@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from ros_buildfarm.config import get_index as get_config_index
 from ros_buildfarm.config import get_release_build_files
 from ros_buildfarm.config import get_distribution_file
@@ -10,6 +12,7 @@ from pprint import pprint
 from threading import Thread, Lock
 from time import sleep
 
+from distro import codename
 from github import Github, Auth, WorkflowRun
 
 import sys
@@ -114,6 +117,8 @@ class AptlyClient:
 class Apt:
     def __init__(self):
         self.deb_cache = Cache()
+        self.deb_cache.update()
+        self.deb_cache.open()
 
     def get(self, pkg_name):
         """get the apt.package.Package object, or None if it doesn't exist"""
@@ -124,11 +129,15 @@ class Apt:
 
 class DistroBuilder:
 
-    def __init__(self, config_index_url=None, distro = 'humble'):
+    def __init__(self, config_index_url=None, distro = None):
         if config_index_url is None:
-            self.config_index_url = 'https://raw.githubusercontent.com/LCAS/ros_buildfarm_config/ros2/index.yaml'
-        else:
-            self.config_index_url = config_index_url
+            config_index_url = environ.get(
+                'ROS_BUILDFARM_CONFIG',
+                'https://raw.githubusercontent.com/LCAS/ros_buildfarm_config/ros2/index.yaml'
+            )
+        self.config_index_url = config_index_url
+        if distro is None:
+            distro = environ.get('ROS_DISTRO', 'humble')
         self.distro = distro
         self.apt = Apt()
 
@@ -164,7 +173,7 @@ class DistroBuilder:
             for pkg_name in sorted(self.explicitly_ignored_pkg_names):
                 print('  -', pkg_name)
 
-        self.dist_cache = get_distribution_cache(index, distro)
+        self.dist_cache = get_distribution_cache(index, self.distro)
 
         if self.explicitly_ignored_pkg_names:
             # get direct dependencies from distro cache for each package
@@ -216,55 +225,76 @@ class DistroBuilder:
             pkgs[pkg_name] = pkg
         return topological_order_packages(pkgs)
 
-    def is_uptodate(self, pkg_name):
+    def is_uptodate(self, pkg_name, required_version):
         """ check if package is already available in repository
             pkg_name -- ROS key string identifying the package
+            required_version -- version strong we need
 
             return True if the package is already available in the requested version
         """
-
-        # get version from distro 
-        try:
-            required_version = self.get_package_version(pkg_name)
-        except KeyError:
-            print('no version identified for "%s" found in our distro file. Consider it being up-to-date.' % pkg_name)
-            required_version='NOT_NEEDED'
-            return True
-
         # get package from Apt repo
         deb_pkg_name = get_debian_package_name(self.distro, pkg_name)
-        pkg = self.apt.get(pkg_name)
-        print(
-            'check if package "%s" (deb name: "%s") is already available '
-            'in apt repository with version %s'
-            % (pkg_name, deb_pkg_name, required_version))
+        pkg = self.apt.get(deb_pkg_name)
+        #print(
+        #    'check if package "%s" (deb name: "%s") is already available '
+        #    'in apt repository with version %s'
+        #    % (pkg_name, deb_pkg_name, required_version))
 
         if pkg is None:
-            print('  no package with name %s in apt cache' % (deb_pkg_name))
+            #print('  no package with name %s in apt cache' % (deb_pkg_name))
             return False
 
-        print('  found version(s) %s of %s in apt cache' % (pkg.versions, deb_pkg_name))
+        #print('  found version(s) %s of %s in apt cache; compare against %s' % (
+        #    pkg.versions, deb_pkg_name, required_version))
         for pv in pkg.versions:
-            if str(pv).startswith(required_version):
+
+            if str(pv).split('=')[-1].startswith(required_version):
                 return True
         return False
     
+    def get_gbp_tag(self, pkg, required_version):
+        return 'debian/%s_%s_%s' % (
+            get_debian_package_name(self.distro, pkg),
+            required_version,
+            codename()
+        )
+    
+    def get_release_repository_url(self, pkg_name):
+        pkg = self. dist_file.release_packages[pkg_name]
+        repo_name = pkg.repository_name
+        repo = self.dist_file.repositories[repo_name]
+        return repo.release_repository.url
+
+
     def run(self):
         pkgs = b.get_ordered_packages()
         github = GitHubInterface()
+        print('::group::%s' % 'check all packages in topological order')
         for (k,v) in pkgs:
-            print(v)
+            #print(v)
             pkg = v['name']
+            try:
+                required_version = self.get_package_version(pkg)
+            except KeyError:
+                raise RuntimeError(('::error title=%s::no version found in our distro file. ' % pkg))
+            print('check package %s...', pkg)
+            if not b.is_uptodate(pkg, required_version):
+                tag = self.get_gbp_tag(pkg, required_version)
+                url = self.get_release_repository_url(pkg)
+                print(' x -> "%s" needs building for version %s\n       (url: %s, tag: %s)' % (
+                    pkg, required_version, url, tag))
+            else:
+                print(' - -> "%s" is up to date already with version %s' % (
+                    pkg, required_version))
+        print('::endgroup::')
 
-            if not b.is_uptodate(pkg):
-                print('"%" needs building!')
                 
 
 
 #aptly = AptlyClient()
 #aptly.report()
 
-github = GitHubInterface()
+#github = GitHubInterface()
 
 #wf = github.dispatch_build(
 #    'https://github.com/lcas-releases/topological_navigation.git', 

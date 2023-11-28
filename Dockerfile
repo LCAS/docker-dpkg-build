@@ -18,11 +18,12 @@ RUN sh -c 'echo "deb https://lcas.lincoln.ac.uk/apt/lcas $(lsb_release -sc) lcas
 
     #&& curl -s http://lcas.lincoln.ac.uk/repos/public.key | apt-key add - && sh -c 'echo "deb http://lcas.lincoln.ac.uk/ubuntu/main $(lsb_release -sc) main" > /etc/apt/sources.list.d/lcas-latest.list'
 
-RUN pip install -U bloom pip install pyyaml==5.1 git+https://github.com/ros-infrastructure/ros_buildfarm.git@3.0.1 aptly-api-client pygithub
+#RUN pip install -U bloom pip install pyyaml==5.1 git+https://github.com/ros-infrastructure/ros_buildfarm.git@3.0.1 aptly-api-client pygithub
 
 ENV ROS_DISTRO=humble
 ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
+ENV ROSDISTRO_INDEX_URL=https://raw.github.com/lcas/rosdistro/master/index-v4.yaml
 
 RUN rosdep init || true
 RUN mkdir -p ~/.config/rosdistro && echo "index_url: https://raw.github.com/lcas/rosdistro/master/index-v4.yaml" > ~/.config/rosdistro/config.yaml
@@ -30,7 +31,11 @@ RUN mkdir -p ~/.config/rosdistro && echo "index_url: https://raw.github.com/lcas
 RUN mkdir /package
 
 COPY run.sh /run.sh
-RUN chmod u+x /run.sh
+COPY python/build_chain.py /build_chain.py
+RUN chmod u+x /run.sh /build_chain.py
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 # invalidate cache to ensure we always have the latest
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache

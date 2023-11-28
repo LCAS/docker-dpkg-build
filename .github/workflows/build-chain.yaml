@@ -1,0 +1,35 @@
+name: Build missing packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ros_distro:
+        type: string
+        required: true
+        default: humble
+        description: "The ROS distro"
+
+run-name: Build missing packages for "${{ inputs.ros_distro }}", invoked by @${{ github.actor }}
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: addnab/docker-run-action@v3
+      with:
+        username: lcas
+        password: lincoln
+        registry: lcas.lincoln.ac.uk
+        image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
+        options: -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
+        run: |
+          ./build-chain.py
+    - name: "copy from staging to lcas"
+      run: |
+        APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
+        repo=lcas_ros
+        echo "Updating published repo..."
+        curl  -X PUT -H 'Content-Type: application/json' --data "{\"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
