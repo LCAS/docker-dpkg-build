@@ -31,8 +31,8 @@ jobs:
     #     run: |
     #       ./run.sh
     - name: run docker
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}} lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master ./run.sh
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}} lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master ./run.sh
     - name: "upload to Aptly staging"
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
