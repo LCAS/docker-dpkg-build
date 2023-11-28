@@ -30,6 +30,7 @@ jobs:
     #     options: -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}}
     #     run: |
     #       ./run.sh
+    - uses: AutoModality/action-clean@v1
     - name: run docker
       run: |
         docker run --rm -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}} lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master ./run.sh
