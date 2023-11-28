@@ -38,7 +38,6 @@ jobs:
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
         folder=`mktemp -u tmp.XXXXXXXXXXXXXXX`
         repo=lcas_ros_staging
-        find ${{ github.workspace }}
         files=`ls ${{ github.workspace }}/*.deb ${{ github.workspace }}/*.ddeb ${{ github.workspace }}/*.tar.?z ${{ github.workspace }}/*.changes`
         for f in $files; do
           echo "Uploading $f..."
@@ -58,3 +57,4 @@ jobs:
           ${{ github.workspace }}/*.ddeb
           ${{ github.workspace }}/*.tar.?z
           ${{ github.workspace }}/*.changes
+    - uses: AutoModality/action-clean@v1
