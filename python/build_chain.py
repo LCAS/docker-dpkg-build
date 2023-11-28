@@ -44,20 +44,20 @@ class GitHubInterface:
         _max_sleep = 30
         while True:
             workflow.update()
-            print('  workflow run %s: status: %s, conclusion: %s' % 
-                  (workflow, workflow.status, workflow.conclusion))
+            # print('  workflow run %s: status: %s, conclusion: %s' % 
+            #       (workflow, workflow.status, workflow.conclusion))
             sleep(sleep_time)
             # wait longer and long, up to _max_sleep seconds
             if workflow.conclusion is not None:
-                print('workflow run %s has concluded with %s' %
-                      (workflow, workflow.conclusion))
+                # print('workflow run %s has concluded with %s' %
+                #       (workflow, workflow.conclusion))
                 break
             else:
                 sleep_time += 1 if sleep_time < _max_sleep else _max_sleep
 
         return workflow.conclusion
 
-    def dispatch_build(self, release_repo=None, release_tag=None):
+    def dispatch_build(self, release_repo, release_tag):
         self.workflow_lock.acquire()
         try:
             previous_runs = set(self.build_workflow.get_runs())
@@ -283,6 +283,11 @@ class DistroBuilder:
                 url = self.get_release_repository_url(pkg)
                 print(' x -> "%s" needs building for version %s\n       (url: %s, tag: %s)' % (
                     pkg, required_version, url, tag))
+                job = github.dispatch_build(url, tag)
+                print('      dispatched build task for %s, run: %s, waiting for completion...' %
+                      (pkg, job.html_url))
+                concluded = github.wait_for_completion(job)
+                print('      run completed with outcome %s' % concluded)
             else:
                 print(' - -> "%s" is up to date already with version %s' % (
                     pkg, required_version))
