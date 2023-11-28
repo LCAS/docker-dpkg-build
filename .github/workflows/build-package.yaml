@@ -21,15 +21,18 @@ jobs:
     runs-on: lcas
 
     steps:
-    - uses: addnab/docker-run-action@v3
-      with:
-        username: lcas
-        password: lincoln
-        registry: lcas.lincoln.ac.uk
-        image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
-        options: -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}}
+    # - uses: addnab/docker-run-action@v3
+    #   with:
+    #     username: lcas
+    #     password: lincoln
+    #     registry: lcas.lincoln.ac.uk
+    #     image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
+    #     options: -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}}
+    #     run: |
+    #       ./run.sh
+    - name: run docker
         run: |
-          ./run.sh
+          docker run --rm -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}} lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master ./run.sh
     - name: "upload to Aptly staging"
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
