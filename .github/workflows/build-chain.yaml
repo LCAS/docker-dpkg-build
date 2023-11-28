@@ -26,6 +26,8 @@ jobs:
         image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
         options: -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
         run: |
+          rosdep update
+          apt-get update
           ./build-chain.py
     - name: "copy from staging to lcas"
       run: |
