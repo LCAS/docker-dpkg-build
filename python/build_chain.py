@@ -7,14 +7,17 @@ from ros_buildfarm.release_job import _get_direct_dependencies, _get_downstream_
 from ros_buildfarm.common import get_debian_package_name
 from apt.cache import Cache
 from pprint import pprint
+from threading import Thread, Lock
+from time import sleep
+
+from github import Github, Auth, WorkflowRun
 
 import sys
 from os import environ
 
 class GitHubInterface:
+
     def __init__(self, token=None, runner_repo="LCAS/docker-dpkg-build", build_workflow_filename='build-package.yaml'):
-        from github import Github
-        from github import Auth
 
         if token is None:
             token = environ.get('GH_API_TOKEN', '')
@@ -24,17 +27,69 @@ class GitHubInterface:
         self.github = Github(auth=auth)
         self.repo = self.github.get_repo(runner_repo)
         self.build_workflow = self.repo.get_workflow(build_workflow_filename)
+        self.workflow_lock = Lock()
     
+    def get_deb_artifact_from_wf(self, wf=None):
+        if wf == None:
+            wf = list(self.build_workflow.get_runs(status='completed'))[0]
+            print(wf)
+        artifacts = list(wf.get_artifacts())[0].archive_download_url
+        print(artifacts)
+        
+
+    def wait_for_completion(self, workflow: WorkflowRun):
+        """
+        blocks until a GitHub WorkflowRun is concluded. 
+
+        returns the WorkflowRun.conclude string (cancelled, failure, neutral, skipped, stale, success, timed_out)
+        
+        """
+        sleep_time = 1
+        _max_sleep = 30
+        while True:
+            workflow.update()
+            print('  workflow run %s: status: %s, conclusion: %s' % 
+                  (workflow, workflow.status, workflow.conclusion))
+            sleep(sleep_time)
+            # wait longer and long, up to _max_sleep seconds
+            if workflow.conclusion is not None:
+                print('workflow run %s has concluded with %s' %
+                      (workflow, workflow.conclusion))
+                break
+            else:
+                sleep_time += 1 if sleep_time < _max_sleep else _max_sleep
+
+        return workflow.conclusion
+
     def dispatch_build(self, release_repo=None, release_tag=None):
-        print('dispatch build job for %s on tag %s', (release_repo, release_tag))
-        if not self.build_workflow.create_dispatch(
-            'master',
-            inputs={
-                'release_repo': release_repo,
-                'release_tag': release_tag
-            }
-        ):
-            raise RuntimeError('couldn\'t dispatch')
+        self.workflow_lock.acquire()
+        try:
+            previous_runs = set(self.build_workflow.get_runs())
+            print('dispatch build job for %s on tag %s', (release_repo, release_tag))
+            if not self.build_workflow.create_dispatch(
+                'master',
+                inputs={
+                    'release_repo': release_repo,
+                    'release_tag': release_tag
+                }
+            ):
+                raise RuntimeError('couldn\'t dispatch')
+            print('wait for run being listed')
+            sleep_time = 0.1
+            while set(self.build_workflow.get_runs()) == previous_runs:
+                sleep(sleep_time)
+                sleep_time *= 2 if sleep_time < 5 else 5
+            wfs = list(set(self.build_workflow.get_runs()) - previous_runs)
+            if len(wfs) != 1:
+                raise RuntimeError(
+                    'found more than one new run: %s, this mustn\'t happen!',
+                     wfs)
+            wf = wfs[0]
+            # return the workflow object
+            return wfs[0]
+        finally:
+            self.workflow_lock.release()
+
 
 
 class AptlyClient:
@@ -205,10 +260,11 @@ class DistroBuilder:
 #aptly.report()
 
 github = GitHubInterface()
-github.dispatch_build(
-    'https://github.com/lcas-releases/topological_navigation.git', 
-    'debian/humble/topological_navigation_msgs/3.0.1-1')
-
+github.get_deb_artifact_from_wf()
+#wf = github.dispatch_build(
+#    'https://github.com/lcas-releases/topological_navigation.git', 
+#    'debian/ros-humble-topological-navigation-msgs_3.0.3-1_jammy')
+#github.wait_for_completion(wf)
 
 # b = DistroBuilder()
 # pkgs = b.get_ordered_packages()
