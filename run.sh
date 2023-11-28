@@ -13,8 +13,8 @@ git clone  ${GBP_REPO} gbp/
 cd gbp
 git checkout ${GBP_TAG}
 
-#apt-get update 
-#rosdep update
+apt-get update 
+rosdep update
 
 # mkdir -p /tmp/additional_debs
 # for url in "$DEB_URLS"; do
