@@ -43,7 +43,7 @@ RUN curl -o /etc/ros/rosdep/sources.list.d/20-default.list https://raw.githubuse
 RUN curl -o /etc/ros/rosdep/sources.list.d/50-lcas.list https://raw.githubusercontent.com/LCAS/rosdistro/master/rosdep/sources.list.d/50-lcas.list
 RUN apt-get update 
 RUN rosdep update
-
+ENV MAKEOPTS="--jobs 8 --load-average 9"
 
 CMD ["./run.sh"]
 #ENTRYPOINT ["./run.sh"]
