@@ -25,7 +25,6 @@ ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
 ENV ROSDISTRO_INDEX_URL=https://raw.github.com/lcas/rosdistro/master/index-v4.yaml
 
-RUN rosdep init || true
 RUN mkdir -p ~/.config/rosdistro && echo "index_url: https://raw.github.com/lcas/rosdistro/master/index-v4.yaml" > ~/.config/rosdistro/config.yaml
 
 RUN mkdir /package
@@ -39,6 +38,7 @@ RUN pip install -r /tmp/requirements.txt
 
 # invalidate cache to ensure we always have the latest
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+RUN rosdep init || true
 RUN curl -o /etc/ros/rosdep/sources.list.d/20-default.list https://raw.githubusercontent.com/LCAS/rosdistro/master/rosdep/sources.list.d/20-default.list
 RUN curl -o /etc/ros/rosdep/sources.list.d/50-lcas.list https://raw.githubusercontent.com/LCAS/rosdistro/master/rosdep/sources.list.d/50-lcas.list
 RUN apt-get update 
