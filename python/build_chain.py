@@ -29,13 +29,6 @@ class GitHubInterface:
         self.build_workflow = self.repo.get_workflow(build_workflow_filename)
         self.workflow_lock = Lock()
     
-    def get_deb_artifact_from_wf(self, wf=None):
-        if wf == None:
-            wf = list(self.build_workflow.get_runs(status='completed'))[0]
-            print(wf)
-        artifacts = list(wf.get_artifacts())[0].archive_download_url
-        print(artifacts)
-        
 
     def wait_for_completion(self, workflow: WorkflowRun):
         """
@@ -255,18 +248,32 @@ class DistroBuilder:
             if str(pv).startswith(required_version):
                 return True
         return False
+    
+    def run(self):
+        pkgs = b.get_ordered_packages()
+        github = GitHubInterface()
+        for (k,v) in pkgs:
+            print(v)
+            pkg = v['name']
+
+            if not b.is_uptodate(pkg):
+                print('"%" needs building!')
+                
+
 
 #aptly = AptlyClient()
 #aptly.report()
 
 github = GitHubInterface()
-github.get_deb_artifact_from_wf()
+
 #wf = github.dispatch_build(
 #    'https://github.com/lcas-releases/topological_navigation.git', 
 #    'debian/ros-humble-topological-navigation-msgs_3.0.3-1_jammy')
 #github.wait_for_completion(wf)
 
-# b = DistroBuilder()
+b = DistroBuilder()
+b.run()
+
 # pkgs = b.get_ordered_packages()
 # print(b.is_uptodate("desktop"))
 # for (k,v) in pkgs:
