@@ -40,6 +40,8 @@ jobs:
           echo "{\"oauth_token\": \"${{ secrets.GH_API_TOKEN }}\", \"github_user\": \"strands-jenkins\"}"  > ~/.config/bloom
           echo "https://strands-jenkins:${{ secrets.GH_API_TOKEN }}@github.com" > ~/.git-credentials
           git config --global credential.helper store
+          git config --global user.name "L-CAS ROS Buildfarm"
+          git config --global user.email "marc@hanheide.net"
           export BLOOM_DONT_ASK_FOR_DOCS=1
           export BLOOM_DONT_ASK_FOR_SOURCE=1
           export BLOOM_DONT_ASK_FOR_MAINTENANCE_STATUS=1
