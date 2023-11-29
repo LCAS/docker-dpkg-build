@@ -41,7 +41,7 @@ jobs:
 
           GIT_USER=strands-jenkins
           GIT_PASS=${{ secrets.GH_API_TOKEN }}
-          git config -g credential.helper "!f() { echo \"username=${GIT_USER}\\npassword=${GIT_PASS}\"; }; f"
+          git config --global credential.helper "!f() { echo \"username=${GIT_USER}\\npassword=${GIT_PASS}\"; }; f"
 
           export BLOOM_DONT_ASK_FOR_DOCS=1
           export BLOOM_DONT_ASK_FOR_SOURCE=1
