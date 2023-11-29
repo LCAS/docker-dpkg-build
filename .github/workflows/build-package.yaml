@@ -47,7 +47,7 @@ jobs:
         echo "updating repo with files in $folder"
         curl -fsS -X POST -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/repos/$repo/file/$folder
         echo "Updating published staging repo..."
-        curl  -X PUT -H 'Content-Type: application/json' --data "{\"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/staging/jammy
+        curl  -X PUT -H 'Content-Type: application/json' --data "{\"ForceOverwrite\": \"true\", \"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/staging/jammy
         
 
     - uses: actions/upload-artifact@v3

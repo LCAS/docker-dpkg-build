@@ -34,7 +34,7 @@ jobs:
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
         repo=lcas_ros
         echo "Updating published repo..."
-        curl  -X PUT -H 'Content-Type: application/json' --data "{\"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
+        curl  -X PUT -H 'Content-Type: application/json' --data "{\"ForceOverwrite\": \"true\", \"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
         curl  -ograph.svg -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/graph.svg
     - name: Archive graphs results
       uses: actions/upload-artifact@v3
