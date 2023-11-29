@@ -34,19 +34,19 @@ jobs:
     - name: run docker
       run: |
         docker run --rm -v ${{ github.workspace }}:/package -e GBP_REPO=${{ github.event.inputs.release_repo}} -e GBP_TAG=${{ github.event.inputs.release_tag}} lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master ./run.sh
-    - name: "upload to Aptly staging"
+    - name: "upload to Aptly repo and make available at staging"
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
         folder=`mktemp -u tmp.XXXXXXXXXXXXXXX`
-        repo=lcas_ros_staging
-        files=`ls ${{ github.workspace }}/*.deb ${{ github.workspace }}/*.tar.?z ${{ github.workspace }}/*.changes`
+        repo=lcas_ros
+        files=`find ${{ github.workspace }}/ -name "*.deb" -o -name "*.ddeb" -o -name "*.udeb" -o -name "*.dsc" -o -name "*.tar.?z" -maxdepth 1`
         for f in $files; do
           echo "Uploading $f..."
           curl -fsS -X POST -F "file=@$f" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/files/$folder
         done
-        echo "updating staging repo with files in $folder"
+        echo "updating repo with files in $folder"
         curl -fsS -X POST -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/repos/$repo/file/$folder
-        echo "Updating published repo..."
+        echo "Updating published staging repo..."
         curl  -X PUT -H 'Content-Type: application/json' --data "{\"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/staging/jammy
         
 
