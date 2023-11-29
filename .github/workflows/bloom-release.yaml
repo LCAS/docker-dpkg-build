@@ -38,10 +38,7 @@ jobs:
         run: |
           mkdir -p ~/.config
           echo "{\"oauth_token\": \"${{ secrets.GH_API_TOKEN }}\", \"github_user\": \"strands-jenkins\"}"  > ~/.config/bloom
-
-          GIT_USER=strands-jenkins
-          GIT_PASS=${{ secrets.GH_API_TOKEN }}
-          git config --global credential.helper '!f() { echo -e "username=strands-jenkins\npassword=${{ secrets.GH_API_TOKEN }}"; }; f'
+          echo "https://strands-jenkins:${{ secrets.GH_API_TOKEN }}@github.com" > ~/.git-credentials
 
           export BLOOM_DONT_ASK_FOR_DOCS=1
           export BLOOM_DONT_ASK_FOR_SOURCE=1
