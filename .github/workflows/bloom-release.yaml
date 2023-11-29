@@ -1,0 +1,44 @@
+name: run Bloom for a repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      ros_distro:
+        type: string
+        required: true
+        default: humble
+        description: "The ROS distro"
+      track:
+        type: string
+        required: true
+        default: humble
+        description: "bloom track"
+      repo:
+        type: string
+        required: true
+        default: topological_navigation
+        description: "the rosdistro repository to release"
+
+run-name: run Bloom for repository "${{ inputs.repo }}" on track "${{ inputs.track }}" for "${{ inputs.ros_distro }}", invoked by @${{ github.actor }}
+
+jobs:
+
+  bloom:
+
+    runs-on: lcas
+
+    steps:
+    - uses: addnab/docker-run-action@v3
+      with:
+        username: lcas
+        password: lincoln
+        registry: lcas.lincoln.ac.uk
+        image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
+        options: -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
+        run: |
+          mkdir -p ~/.config
+          echo "{\"oauth_token\": \"${{ secrets.GH_API_TOKEN }}\", \"github_user\": \"strands-jenkins\"}"  > ~/.config/bloom
+          export BLOOM_DONT_ASK_FOR_DOCS=1
+          export BLOOM_DONT_ASK_FOR_SOURCE=1
+          export BLOOM_DONT_ASK_FOR_MAINTENANCE_STATUS=1
+          bloom-release -t ${{ inputs.track }} -r ${{ inputs.ros_distro }} -y --no-web ${{ inputs.repo }} 
