@@ -1,0 +1,45 @@
+name: run Bloom for a repository
+
+on:
+  workflow_call:
+    inputs:
+      bump:
+        type: string
+        required: true
+        default: patch
+    # secrets:
+    #   GH_API_TOKEN:
+    #     required: true
+
+run-name: run catkin_prepare_release, bumping "${{ inputs.bump }}"
+
+jobs:
+
+  catkin_prepare_release:
+
+    runs-on: lcas
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: addnab/docker-run-action@v3
+      name: generate changelogs
+      with:
+        username: lcas
+        password: lincoln
+        registry: lcas.lincoln.ac.uk
+        image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
+        #options: -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
+        run: |
+          cd ${{ github.workspace }}
+          echo "https://oauth2:${{ github.token }}@github.com" > ~/.git-credentials
+          git config --global credential.helper store
+          git config --global user.name "L-CAS ROS Buildfarm"
+          git config --global user.email "marc@hanheide.net"
+          catkin_generate_changelogs -y || catkin_generate_changelogs -y --all
+          git commit -a -m changelogs
+          catkin_prepare_release --bump ${{ inputs.bump }} -y 
