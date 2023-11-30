@@ -1,4 +1,4 @@
-name: run Bloom for a repository
+name: catkin_prepare_release
 
 on:
   workflow_call:
