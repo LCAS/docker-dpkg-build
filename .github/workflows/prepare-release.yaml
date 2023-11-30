@@ -17,7 +17,7 @@ jobs:
 
   catkin_prepare_release:
 
-    runs-on: lcas
+    runs-on: ubuntu-latest
 
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the
