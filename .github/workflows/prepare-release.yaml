@@ -33,13 +33,13 @@ jobs:
         password: lincoln
         registry: lcas.lincoln.ac.uk
         image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
-        #options: -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
+        options: -v ${{ github.workspace }}:${{ github.workspace }} 
         run: |
           cd ${{ github.workspace }}
           echo "https://oauth2:${{ github.token }}@github.com" > ~/.git-credentials
           git config --global credential.helper store
           git config --global user.name "L-CAS ROS Buildfarm"
           git config --global user.email "marc@hanheide.net"
-          catkin_generate_changelogs -y || catkin_generate_changelogs -y --all
+          catkin_generate_changelog -y || catkin_generate_changelog -y --all
           git commit -a -m changelogs
           catkin_prepare_release --bump ${{ inputs.bump }} -y 
