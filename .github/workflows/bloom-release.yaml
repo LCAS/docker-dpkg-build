@@ -1,6 +1,26 @@
 name: run Bloom for a repository
 
 on:
+  workflow_call:
+    inputs:
+      ros_distro:
+        type: string
+        required: true
+        default: humble
+        description: "The ROS distro"
+      track:
+        type: string
+        required: true
+        default: humble
+        description: "bloom track"
+      repo:
+        type: string
+        required: true
+        default: topological_navigation
+        description: "the rosdistro repository to release"
+    secrets:
+      GH_API_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       ros_distro:
