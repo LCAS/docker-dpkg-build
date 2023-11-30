@@ -33,14 +33,13 @@ jobs:
         password: lincoln
         registry: lcas.lincoln.ac.uk
         image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
-        options: -v ${{ github.workspace }}:${{ github.workspace }} 
+        #options: -v ${{ github.workspace }}:${{ github.workspace }} 
         run: |
-          cd ${{ github.workspace }}
           echo "https://oauth2:${{ github.token }}@github.com" > ~/.git-credentials
           git config --global credential.helper store
           git config --global user.name "L-CAS ROS Buildfarm"
           git config --global user.email "marc@hanheide.net"
-          git config --global --add safe.directory ${{ github.workspace }}
+          #git config --global --add safe.directory ${{ github.workspace }}
           catkin_generate_changelog -y || catkin_generate_changelog -y --all
           git commit -a -m changelogs
           catkin_prepare_release --bump ${{ inputs.bump }} -y 
