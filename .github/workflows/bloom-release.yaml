@@ -58,7 +58,7 @@ jobs:
         run: |
           set -x
           mkdir -p ~/.config
-          echo "{\"oauth_token\": \"${{ secrets.GH_API_TOKEN }}\", \"github_user\": \"oauth\"}"  > ~/.config/bloom
+          echo "{\"oauth_token\": \"${{ secrets.GH_API_TOKEN }}\", \"github_user\": \"strands-jenkins\"}"  > ~/.config/bloom
           echo "https://oauth:${{ secrets.GH_API_TOKEN }}@github.com" > ~/.git-credentials
           git config --global credential.helper store
           git config --global user.name "L-CAS ROS Buildfarm"
