@@ -5,7 +5,9 @@ FROM ${BASE_IMAGE}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y python3-pip lsb-release curl software-properties-common build-essential debhelper apt-transport-https curl devscripts equivs git-buildpackage pkg-config && \
+    apt-get install -y python3-pip lsb-release curl software-properties-common build-essential \
+            python3-pygraphviz python3-rosinstall-generator \
+            debhelper apt-transport-https curl devscripts equivs git-buildpackage pkg-config && \
     apt-get clean
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
