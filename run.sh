@@ -17,7 +17,7 @@ apt-get update
 rosdep update
 
 # hack to avpiod conflict
-apt -y purge python3-catkin-pkg
+apt -y purge python3-catkin-pkg python3-rospkg python3-rosdistro
 
 # mkdir -p /tmp/additional_debs
 # for url in "$DEB_URLS"; do
