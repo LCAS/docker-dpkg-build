@@ -16,6 +16,9 @@ git checkout ${GBP_TAG}
 apt-get update 
 rosdep update
 
+# hack to avpiod conflict
+apt -y purge python3-catkin-pkg
+
 # mkdir -p /tmp/additional_debs
 # for url in "$DEB_URLS"; do
 #     package_name=`basename $url`
