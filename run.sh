@@ -16,8 +16,8 @@ git checkout ${GBP_TAG}
 apt-get update 
 rosdep update
 
-# hack to avpiod conflict
-apt -y purge python3-catkin-pkg python3-rospkg python3-rosdistro
+# hack to avoid conflict
+apt-get -y purge python3-rosinstall-generator python3-catkin-pkg python3-rospkg python3-rosdistro
 
 # mkdir -p /tmp/additional_debs
 # for url in "$DEB_URLS"; do
