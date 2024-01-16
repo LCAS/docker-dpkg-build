@@ -5,10 +5,12 @@ FROM ${BASE_IMAGE}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y python3-pip lsb-release curl software-properties-common build-essential \
+    apt-get dist-upgrade -y && \
+    apt-get autoremove -y && \
+    apt-get install -y --no-install-recommends python3-pip lsb-release curl software-properties-common build-essential \
             python3-pygraphviz python3-rosinstall-generator \
             debhelper apt-transport-https curl devscripts equivs git-buildpackage pkg-config && \
-    apt-get clean
+    apt-get autoclean
 
 RUN sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
     curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
@@ -36,15 +38,15 @@ COPY python/build_chain.py /build_chain.py
 RUN chmod u+x /run.sh /build_chain.py
 
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && pip uninstall -y empy
 
 # invalidate cache to ensure we always have the latest
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 RUN rosdep init || true
 RUN curl -o /etc/ros/rosdep/sources.list.d/20-default.list https://raw.githubusercontent.com/LCAS/rosdistro/master/rosdep/sources.list.d/20-default.list
 RUN curl -o /etc/ros/rosdep/sources.list.d/50-lcas.list https://raw.githubusercontent.com/LCAS/rosdistro/master/rosdep/sources.list.d/50-lcas.list
-RUN apt-get update 
-RUN rosdep update
+#RUN apt-get update 
+#RUN rosdep update
 
 ENV MAKEOPTS="--jobs 8 --load-average 9"
 ENV BLOOM_DONT_ASK_FOR_DOCS=1
