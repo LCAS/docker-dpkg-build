@@ -11,6 +11,7 @@ from apt.cache import Cache
 from pprint import pprint
 from threading import Thread, Lock
 from time import sleep
+from sys import exit
 
 from distro import codename
 from github import Github, Auth, WorkflowRun
@@ -270,28 +271,35 @@ class DistroBuilder:
         pkgs = b.get_ordered_packages()
         github = GitHubInterface()
         print('::group::%s' % 'check all packages in topological order')
-        for (k,v) in pkgs:
-            #print(v)
-            pkg = v['name']
-            try:
-                required_version = self.get_package_version(pkg)
-            except KeyError:
-                raise RuntimeError(('::error title=%s::no version found in our distro file. ' % pkg))
-            print('check package %s...', pkg)
-            if not b.is_uptodate(pkg, required_version):
-                tag = self.get_gbp_tag(pkg, required_version)
-                url = self.get_release_repository_url(pkg)
-                print(' x -> "%s" needs building for version %s\n       (url: %s, tag: %s)' % (
-                    pkg, required_version, url, tag))
-                job = github.dispatch_build(url, tag)
-                print('      dispatched build task for %s, run: %s, waiting for completion...' %
-                      (pkg, job.html_url))
-                concluded = github.wait_for_completion(job)
-                print('      run completed with outcome %s' % concluded)
-            else:
-                print(' - -> "%s" is up to date already with version %s' % (
-                    pkg, required_version))
-        print('::endgroup::')
+        try:
+            for (k,v) in pkgs:
+                #print(v)
+                pkg = v['name']
+                try:
+                    required_version = self.get_package_version(pkg)
+                except KeyError:
+                    raise RuntimeError(('::error title=%s::no version found in our distro file. ' % pkg))
+                print('check package %s...', pkg)
+                if not b.is_uptodate(pkg, required_version):
+                    tag = self.get_gbp_tag(pkg, required_version)
+                    url = self.get_release_repository_url(pkg)
+                    print(' x -> "%s" needs building for version %s\n       (url: %s, tag: %s)' % (
+                        pkg, required_version, url, tag))
+                    job = github.dispatch_build(url, tag)
+                    print('      dispatched build task for %s, run: %s, waiting for completion...' %
+                        (pkg, job.html_url))
+                    concluded = github.wait_for_completion(job)
+                    print('      run completed with outcome %s' % concluded)
+                    if concluded != "success":
+                        print('**** unsuccessful outcome: %s, stopping chain' % concluded)
+                        return False
+                else:
+                    print(' - -> "%s" is up to date already with version %s' % (
+                        pkg, required_version))
+        finally:
+            print('::endgroup::')
+
+        return True
 
                 
 
@@ -307,7 +315,9 @@ class DistroBuilder:
 #github.wait_for_completion(wf)
 
 b = DistroBuilder()
-b.run()
+if not b.run():
+    # indicate failure
+    exit(1)
 
 # pkgs = b.get_ordered_packages()
 # print(b.is_uptodate("desktop"))
