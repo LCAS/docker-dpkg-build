@@ -26,8 +26,10 @@ jobs:
         image: lcas.lincoln.ac.uk/lcas/docker-dpkg-build:master
         options: --rm -e GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} -e ROS_DISTRO=${{ github.event.inputs.ros_distro}} 
         run: |
-          rosdep update
-          apt-get update
+          #rosdep update
+          #apt-get update
+          # manually (re-)installing empy again for ros_buildfarm
+          pip install empy
           ./build_chain.py
     - name: "copy from staging to lcas"
       run: |
