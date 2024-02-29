@@ -48,7 +48,7 @@ jobs:
 
                 
                 # create release snapshot merging the last mirror snapshot and the new repo snapshot
-                RELEASE_SNAPSHOT="${PUBLISH_PREFIX}_${REPO_SNAPSHOT}"
+                RELEASE_SNAPSHOT="release_${TIMESTAMP}"
                 DATA="{\"Destination\": \"${RELEASE_SNAPSHOT}\", \"Sources\": [\"${REPO_SNAPSHOT}\", \"${LAST_MIRRORS_SNAPSHOT}\"]}"                
 
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
