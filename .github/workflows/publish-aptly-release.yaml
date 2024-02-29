@@ -1,4 +1,4 @@
-name: "run mirror updates on all mirrors"
+name: "make a new release"
 
 on:
     #schedule:
