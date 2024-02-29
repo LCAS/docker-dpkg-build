@@ -38,11 +38,7 @@ jobs:
                 TIMESTAMP=`date +%Y%m%d%H%M`
                 REPO_SNAPSHOT="${REPO}_${TIMESTAMP}"
 
-                read -r -d '' DATA << EOM
-                {
-                    "Name": "${REPO_SNAPSHOT}",
-                }
-                EOM
+                DATA="{\"Name\": \"${REPO_SNAPSHOT}\"}""
 
                 # create snapshot
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
@@ -53,26 +49,12 @@ jobs:
                 
                 # create release snapshot merging the last mirror snapshot and the new repo snapshot
                 RELEASE_SNAPSHOT="${PUBLISH_PREFIX}_${REPO_SNAPSHOT}"
-                read -r -d '' DATA << EOM
-                {
-                    "Destination": "${RELEASE_SNAPSHOT}",
-                    "Sources": [
-                        "${REPO_SNAPSHOT}",
-                        "${LAST_MIRRORS_SNAPSHOT}"
-                    ]
-                }
-                EOM
+                DATA="{\"Destination\": \"${RELEASE_SNAPSHOT}\", \"Sources\": [\"${REPO_SNAPSHOT}\", \"${LAST_MIRRORS_SNAPSHOT}\"]}"                
 
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
 
                 # publish the release snapshot
-                read -r -d '' DATA << EOM
-                {
-                    "Snapshots": [
-                        "${RELEASE_SNAPSHOT}"
-                    ],
-                    "ForceOverwrite": true
-                }
+                DATA="{\"Snapshots\": [\"${RELEASE_SNAPSHOT}\"], \"ForceOverwrite\": true}"
 
                 curl  -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
 
