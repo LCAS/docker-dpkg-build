@@ -54,7 +54,7 @@ jobs:
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
 
                 # publish the release snapshot
-                DATA="{\"Snapshots\": [{\"Component\": \"\", \"Name\": \"${RELEASE_SNAPSHOT}\"}, {\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
+                DATA="{\"Snapshots\": [{\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
 
                 curl  -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
 
