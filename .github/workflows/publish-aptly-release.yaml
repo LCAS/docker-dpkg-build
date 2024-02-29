@@ -44,7 +44,7 @@ jobs:
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
 
                 # get mirror snapshots
-                LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_ | sort | tail -n1`
+                LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_' | sort | tail -n1`
 
                 
                 # create release snapshot merging the last mirror snapshot and the new repo snapshot
@@ -60,17 +60,17 @@ jobs:
 
                 # cleanup old snapshots
 
-                RELEASE_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^release_`
+                RELEASE_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^release_'`
                 for m in $RELEASE_SNAPSHOTS; do
                     curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
                 done
 
-                MIRRORS_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_`
+                MIRRORS_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_'`
                 for m in $MIRRORS_SNAPSHOTS; do
                     curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
                 done
                 
-                REPO_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep "^${REPO}_"
+                REPO_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep "^${REPO}_"`
                 for m in $REPO_SNAPSHOTS; do
                     curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
                 done
