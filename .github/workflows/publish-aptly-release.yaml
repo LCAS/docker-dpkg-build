@@ -38,7 +38,7 @@ jobs:
                 TIMESTAMP=`date +%Y%m%d%H%M`
                 REPO_SNAPSHOT="${REPO}_${TIMESTAMP}"
 
-                DATA="{\"Name\": \"${REPO_SNAPSHOT}\"}""
+                DATA="{\"Name\": \"${REPO_SNAPSHOT}\"}"
 
                 # create snapshot
                 curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
