@@ -1,0 +1,98 @@
+name: "run mirror updates on all mirrors"
+
+on:
+    #schedule:
+        # run this every Monday morning at 4 am
+    #    - cron: "0 4 * * 1"
+    workflow_dispatch:
+        inputs:
+            repo:
+                description: "The name of the repo to update"
+                required: true
+                default: "lcas_ros"
+            distro:
+                description: "The name of the distro to update"
+                required: true
+                default: "jammy"
+            prefix:
+                description: "The prefix to use for the published snapshots"
+                required: true
+                default: "hurga"
+    
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: 'Setup jq'
+              uses: dcarbone/install-jq-action@v2
+    
+            - name: "Create Snapshot"
+              run: |
+                set -e -x
+
+                APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
+                REPO=${{ github.event.inputs.repo }}
+                DISTRO=${{ github.event.inputs.distro }}
+                PUBLISH_PREFIX=${{ github.event.inputs.prefix }}
+
+                TIMESTAMP=`date +%Y%m%d%H%M`
+                REPO_SNAPSHOT="${REPO}_${TIMESTAMP}"
+
+                read -r -d '' DATA <<- EOM
+                {
+                    "Name": "${REPO_SNAPSHOT}",
+                }
+                EOM
+
+                # create snapshot
+                curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
+
+                # get mirror snapshots
+                LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_ | sort | tail -n1`
+
+                
+                # create release snapshot merging the last mirror snapshot and the new repo snapshot
+                RELEASE_SNAPSHOT="${PUBLISH_PREFIX}_${REPO_SNAPSHOT}"
+                read -r -d '' DATA <<- EOM
+                {
+                    "Destination": "${RELEASE_SNAPSHOT}",
+                    "Sources": [
+                        "${REPO_SNAPSHOT}",
+                        "${LAST_MIRRORS_SNAPSHOT}"
+                    ]
+                }
+                EOM
+
+                curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
+
+                # publish the release snapshot
+                read -r -d '' DATA <<- EOM
+                {
+                    "Snapshots": [
+                        "${RELEASE_SNAPSHOT}"
+                    ],
+                    "ForceOverwrite": true
+                }
+
+                curl  -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
+
+                # cleanup old snapshots
+
+                RELEASE_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^release_`
+                for m in $RELEASE_SNAPSHOTS; do
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                done
+
+                MIRRORS_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_`
+                for m in $MIRRORS_SNAPSHOTS; do
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                done
+                
+                REPO_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep "^${REPO}_"
+                for m in $REPO_SNAPSHOTS; do
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                done
+
+
+
+                    
