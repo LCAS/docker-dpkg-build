@@ -17,7 +17,7 @@ on:
             prefix:
                 description: "The prefix to use for the published snapshots"
                 required: true
-                default: "hurga"
+                default: "lcas"
     
 jobs:
     release:
@@ -61,7 +61,7 @@ jobs:
 
                 echo "::group::Publish the release snapshot"
                 # publish the release snapshot
-                DATA="{\"Snapshots\": [{\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
+                DATA="{\"Snapshots\": [{\"Component\": \"main\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
 
                 curl -f -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
                 echo ::endgroup::
