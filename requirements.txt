@@ -1,7 +1,7 @@
-aptly-api-client==0.2.4
-bloom==0.11.2
-PyGithub==2.1.1
-python-apt==2.4.0+ubuntu2
+aptly-api-client>=0.2.4
+bloom>=0.11.2
+PyGithub>=2.1.1
+python-apt>=2.4.0
 PyYAML==5.1
 ros-buildfarm @ git+https://github.com/ros-infrastructure/ros_buildfarm.git@9eb2aa15c5937ccc5349af222414c87fbebc258c
 
