@@ -1,4 +1,4 @@
-name: "make a new release on aptly"
+name: "make a new release on aptly (stage->release)"
 
 on:
     #schedule:
@@ -26,8 +26,9 @@ jobs:
             - name: 'Setup jq'
               uses: dcarbone/install-jq-action@v2
     
-            - name: "Create Snapshot"
+            - name: "Create Snapshots and release them"
               run: |
+                echo ::group::Setup
                 set -e -x
 
                 APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
@@ -39,10 +40,14 @@ jobs:
                 REPO_SNAPSHOT="${REPO}_${TIMESTAMP}"
 
                 DATA="{\"Name\": \"${REPO_SNAPSHOT}\"}"
-
+                echo ::endgroup::
+                
+                echo "::group::Create snapshot ${REPO_SNAPSHOT} from ${REPO}"
                 # create snapshot
-                curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
-
+                curl  -f -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/repos/${REPO}/snapshots
+                echo ::endgroup::
+                
+                echo "::group::Get last mirror snapshot and merge it with the new repo snapshot"
                 # get mirror snapshots
                 LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_' | sort | tail -n1`
 
@@ -51,30 +56,32 @@ jobs:
                 RELEASE_SNAPSHOT="release_${TIMESTAMP}"
                 DATA="{\"Destination\": \"${RELEASE_SNAPSHOT}\", \"Sources\": [\"${REPO_SNAPSHOT}\", \"${LAST_MIRRORS_SNAPSHOT}\"]}"                
 
-                curl  -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
+                curl -f -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
+                echo ::endgroup::
 
+                echo "::group::Publish the release snapshot"
                 # publish the release snapshot
                 DATA="{\"Snapshots\": [{\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
 
-                curl  -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
+                curl -f -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
+                echo ::endgroup::
 
+                echo "::group::Cleanup old snapshots"
                 # cleanup old snapshots
 
                 RELEASE_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^release_'`
                 for m in $RELEASE_SNAPSHOTS; do
-                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
                 done
 
                 MIRRORS_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_'`
                 for m in $MIRRORS_SNAPSHOTS; do
-                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
                 done
                 
                 REPO_SNAPSHOTS=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep "^${REPO}_"`
                 for m in $REPO_SNAPSHOTS; do
-                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || true
+                    curl -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
                 done
-
-
-
-                    
+                echo ::endgroup::
+                echo "Published snapshot ${RELEASE_SNAPSHOT} on ${PUBLISH_PREFIX}/${DISTRO}" >> $GITHUB_STEP_SUMMARY
