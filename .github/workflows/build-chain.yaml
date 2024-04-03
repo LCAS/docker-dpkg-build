@@ -31,12 +31,12 @@ jobs:
           # manually (re-)installing empy again for ros_buildfarm
           pip install empy
           ./build_chain.py
-    - name: "copy from staging to lcas"
+    - name: "generate graph"
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
-        repo=lcas_ros
-        echo "Updating published repo..."
-        curl  -X PUT -H 'Content-Type: application/json' --data "{\"ForceOverwrite\": true, \"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
+        #repo=lcas_ros
+        #echo "Updating published repo..."
+        #curl  -X PUT -H 'Content-Type: application/json' --data "{\"ForceOverwrite\": true, \"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
         curl  -ograph.svg -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/graph.svg
     - name: Archive graphs results
       uses: actions/upload-artifact@v3
