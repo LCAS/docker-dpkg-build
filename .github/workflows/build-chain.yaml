@@ -38,6 +38,23 @@ jobs:
         #echo "Updating published repo..."
         #curl  -X PUT -H 'Content-Type: application/json' --data "{\"ForceOverwrite\": true, \"SourceKind\": \"local\", \"Sources\": [{\"Name\": \"$repo\"}]}" -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/publish/lcas/jammy
         curl  -ograph.svg -u lcas:${{ secrets.APTLY_TOKEN }} $APTLY_API/graph.svg
+    - uses: lasith-kg/dispatch-workflow@v1
+      id: workflow-dispatch_develop
+      name: 'Trigger new release'
+      with:
+        dispatch-method: workflow_dispatch
+        repo: docker-dpkg-build
+        owner: LCAS
+        ref: refs/heads/master  # or main
+        workflow: publish-aptly-release.yaml  # Or Workflow ID
+        token: ${{ secrets.ORGA_GH_TOKEN }}  # GitHub Token With Relevant Permissions
+        workflow-inputs: |
+          {
+            "repo": "lcas_ros",
+            "distro": "jammy",
+            "prefix": "lcas"
+          }
+    
     - name: Archive graphs results
       uses: actions/upload-artifact@v3
       with:
