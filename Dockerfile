@@ -53,6 +53,8 @@ ENV BLOOM_DONT_ASK_FOR_DOCS=1
 ENV BLOOM_DONT_ASK_FOR_SOURCE=1
 ENV BLOOM_DONT_ASK_FOR_MAINTENANCE_STATUS=1
 
+# empy is driving me nuts... so apparently we have to install a version <4 to make it work
+RUN pip install "empy<4"
 
 CMD ["./run.sh"]
 #ENTRYPOINT ["./run.sh"]
