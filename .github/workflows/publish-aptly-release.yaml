@@ -89,10 +89,10 @@ jobs:
                     curl -f -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
                 done
 
-                NVIDIA_SNAPSHOTS=`curl -f -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^nvidia_'`
-                for m in $NVIDIA_SNAPSHOTS; do
-                    curl -f -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
-                done
+                #NVIDIA_SNAPSHOTS=`curl -f -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^nvidia_'`
+                #for m in $NVIDIA_SNAPSHOTS; do
+                #    curl -f -X DELETE -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/${m} || echo "NOT deleted $m as still needed"
+                #done
 
                 echo ::endgroup::
                 echo "Published snapshot ${RELEASE_SNAPSHOT} on ${PUBLISH_PREFIX}/${DISTRO}" >> $GITHUB_STEP_SUMMARY
