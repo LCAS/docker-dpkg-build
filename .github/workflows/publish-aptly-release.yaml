@@ -9,7 +9,7 @@ on:
             repo:
                 description: "The name of the repo to update"
                 required: true
-                default: "lcas_ros"
+                default: "lcas_ros_jammy"
             distro:
                 description: "The name of the distro to update"
                 required: true
@@ -49,11 +49,11 @@ jobs:
                 
                 echo "::group::Get last mirror snapshot and merge it with the new repo snapshot"
                 # get mirror snapshots
-                LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_' | sort | tail -n1`
+                LAST_MIRRORS_SNAPSHOT=`curl -s -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots | jq -r '.[].Name'| grep '^mirrors_' | grep ${DISTRO} | sort | tail -n1`
 
                 
                 # create release snapshot merging the last mirror snapshot and the new repo snapshot
-                RELEASE_SNAPSHOT="release_${TIMESTAMP}"
+                RELEASE_SNAPSHOT="release_${DISTRO}_${TIMESTAMP}"
                 DATA="{\"Destination\": \"${RELEASE_SNAPSHOT}\", \"Sources\": [\"${REPO_SNAPSHOT}\", \"${LAST_MIRRORS_SNAPSHOT}\"]}"                
 
                 curl -f -X POST -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/snapshots/merge
@@ -61,7 +61,7 @@ jobs:
 
                 echo "::group::Publish the release snapshot"
                 # publish the release snapshot
-                DATA="{\"Snapshots\": [{\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}], \"ForceOverwrite\": true}"
+                DATA="{\"Snapshots\": [{\"Component\": \"lcas\", \"Name\": \"${RELEASE_SNAPSHOT}\"}]}"
 
                 curl -f -X PUT -H 'Content-Type: application/json' --data "${DATA}" -u lcas:${{ secrets.APTLY_TOKEN }} ${APTLY_API}/publish/${PUBLISH_PREFIX}/${DISTRO}
                 echo ::endgroup::

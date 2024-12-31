@@ -47,7 +47,7 @@ jobs:
       run: |
         APTLY_API="https://lcas.lincoln.ac.uk/apt/api"
         folder=`mktemp -u tmp.XXXXXXXXXXXXXXX`
-        repo=lcas_ros
+        repo=lcas_ros_jammy
         files=`find ${{ github.workspace }}/ -name "*.deb" -o -name "*.ddeb" -o -name "*.udeb" -o -name "*.dsc" -o -name "*.tar.?z" -maxdepth 1`
         for f in $files; do
           echo "Uploading $f..."
